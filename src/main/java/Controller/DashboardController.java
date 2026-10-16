@@ -40,70 +40,63 @@ public class DashboardController {
     private AnchorPane rootPane;
 
     private void loadPage(String fxmlFile) {
-
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/View/" + fxmlFile)
-            );
+            java.net.URL resource = getClass()
+                    .getResource("/View/" + fxmlFile);
 
-            Parent newPage = loader.load();
+            if (resource == null) {
+                System.out.println("FXML file not found: " + fxmlFile);
+                return;
+            }
 
-            rootPane.getChildren().setAll(newPage);
+            Parent page = FXMLLoader.load(resource);
 
+            rootPane.getChildren().setAll(page);
 
-            AnchorPane.setTopAnchor(newPage, 0.0);
-            AnchorPane.setBottomAnchor(newPage, 0.0);
-            AnchorPane.setLeftAnchor(newPage, 0.0);
-            AnchorPane.setRightAnchor(newPage, 0.0);
+            AnchorPane.setTopAnchor(page, 0.0);
+            AnchorPane.setBottomAnchor(page, 0.0);
+            AnchorPane.setLeftAnchor(page, 0.0);
+            AnchorPane.setRightAnchor(page, 0.0);
 
-        } catch (IOException | RuntimeException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Navigation Error");
-            alert.setHeaderText("Unable to open page");
-            alert.setContentText(
-                    "Please check the FXML file name and location:\n"
-                            + fxmlFile
-            );
-            alert.showAndWait();
         }
     }
 
 
     @FXML
     void btnDashboardOnAction(ActionEvent event) {
-        loadPage("Dashboard.fxml");
+        loadPage("dashboard.fxml");
     }
 
     @FXML
     void btnAddBookOnAction(ActionEvent event) {
-        loadPage("AddBook.fxml");
+        loadPage("add_book_page.fxml");
     }
 
     @FXML
     void btnAddMemberOnAction(ActionEvent event) {
-        loadPage("AddMember.fxml");
+        loadPage("add_member.fxml");
     }
 
     @FXML
     void btnIssueBookOnAction(ActionEvent event) {
-        loadPage("IssueBook.fxml");
+        loadPage("issue_book.fxml");
     }
 
     @FXML
     void btnReturnBookOnAction(ActionEvent event) {
-        loadPage("ReturnBook.fxml");
+        loadPage("return_book.fxml");
     }
 
     @FXML
     void btnManageMembersOnAction(ActionEvent event) {
-        loadPage("ManageMembers.fxml");
+        loadPage("manage_members.fxml");
     }
 
     @FXML
     void btnBorrowingHistoryOnAction(ActionEvent event) {
-        loadPage("BorrowingHistory.fxml");
+        loadPage("borrowing_history.fxml");
     }
 
     @FXML
@@ -116,7 +109,7 @@ public class DashboardController {
 
         alert.showAndWait().ifPresent(response -> {
             if (response == javafx.scene.control.ButtonType.OK) {
-                loadPage("Login.fxml");
+                loadPage("login_page.fxml");
             }
         });
     }
