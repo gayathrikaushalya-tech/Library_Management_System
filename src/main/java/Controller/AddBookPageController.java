@@ -4,72 +4,42 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 public class AddBookPageController {
 
-    @FXML
-    private Button btnAddBook;
+    @FXML private Button btnAdd;
+    @FXML private Button btnAddBook;
+    @FXML private Button btnAddMember;
+    @FXML private Button btnBorrowingHistory;
+    @FXML private Button btnClear;
+    @FXML private Button btnDashboard;
+    @FXML private Button btnIssueBook;
+    @FXML private Button btnLogin;
+    @FXML private Button btnLogoutIcon;
+    @FXML private Button btnManageMembers;
+    @FXML private Button btnReturnBook;
+    @FXML private Button btnUserIcon;
 
-    @FXML
-    private Button btnAddMember;
+    @FXML private ComboBox<String> comboBox;
+    @FXML private AnchorPane rootPane;
 
-    @FXML
-    private Button btnBorrowingHistory;
-
-    @FXML
-    private Button btnClear;
-
-    @FXML
-    private Button btnDashboard;
-
-    @FXML
-    private Button btnIssueBook;
-
-    @FXML
-    private Button btnLogin;
-
-    @FXML
-    private Button btnManageMembers;
-
-    @FXML
-    private Button btnReturnBook;
-
-    @FXML
-    private ComboBox<String> comboBox;
-
-    @FXML
-    private AnchorPane rootPane;
-
-    @FXML
-    private TextField txtAuthor;
-
-    @FXML
-    private TextField txtBookID;
-
-    @FXML
-    private TextField txtBookTitle;
-
-    @FXML
-    private Label txtLogoutIcon;
-
-    @FXML
-    private TextField txtPublishedYear;
-
-    @FXML
-    private TextField txtQuantity;
-
-    @FXML
-    private Label txtTiltle;
-
-    @FXML
-    private Label txtUserIcon;
+    @FXML private TextField txtAuthor;
+    @FXML private TextField txtBookID;
+    @FXML private TextField txtBookTitle;
+    @FXML private TextField txtPublishedYear;
+    @FXML private TextField txtQuantity;
 
 
     private static final Set<String> bookIDs = new HashSet<>();
@@ -96,13 +66,15 @@ public class AddBookPageController {
         String author = txtAuthor.getText().trim();
         String yearText = txtPublishedYear.getText().trim();
         String quantityText = txtQuantity.getText().trim();
+        String category = comboBox.getValue();
 
-        String category = (String) comboBox.getValue();
 
-
-        if (bookID.isEmpty() || title.isEmpty()
-                || author.isEmpty() || yearText.isEmpty()
-                || quantityText.isEmpty() || category == null) {
+        if (bookID.isEmpty()
+                || title.isEmpty()
+                || author.isEmpty()
+                || yearText.isEmpty()
+                || quantityText.isEmpty()
+                || category == null) {
 
             showAlert(
                     Alert.AlertType.WARNING,
@@ -112,14 +84,14 @@ public class AddBookPageController {
             return;
         }
 
-
         int year;
+
         try {
             year = Integer.parseInt(yearText);
 
-            if (year < 1 || year > 9999) {
+            if (year < 1 || year > java.time.Year.now().getValue()) {
                 showAlert(
-                        Alert.AlertType.ERROR,
+                        Alert.AlertType.WARNING,
                         "Invalid Year",
                         "Enter a valid published year."
                 );
@@ -128,21 +100,21 @@ public class AddBookPageController {
 
         } catch (NumberFormatException e) {
             showAlert(
-                    Alert.AlertType.ERROR,
+                    Alert.AlertType.WARNING,
                     "Invalid Year",
                     "Published year must contain numbers only."
             );
             return;
         }
 
-
         int quantity;
+
         try {
             quantity = Integer.parseInt(quantityText);
 
             if (quantity <= 0) {
                 showAlert(
-                        Alert.AlertType.ERROR,
+                        Alert.AlertType.WARNING,
                         "Invalid Quantity",
                         "Quantity must be greater than zero."
                 );
@@ -151,7 +123,7 @@ public class AddBookPageController {
 
         } catch (NumberFormatException e) {
             showAlert(
-                    Alert.AlertType.ERROR,
+                    Alert.AlertType.WARNING,
                     "Invalid Quantity",
                     "Quantity must contain numbers only."
             );
@@ -159,31 +131,33 @@ public class AddBookPageController {
         }
 
 
-        if (bookIDs.contains(bookID)) {
+        String normalizedID = bookID.toLowerCase();
+
+        if (bookIDs.contains(normalizedID)) {
             showAlert(
                     Alert.AlertType.WARNING,
                     "Duplicate Book ID",
-                    "This Book ID already exists."
+                    "This Book ID already exists. Please use another ID."
             );
             return;
-        } else {
-            bookIDs.add(bookID);
-
-            showAlert(
-                    Alert.AlertType.INFORMATION,
-                    "Success",
-                    "Book added successfully!\n\n"
-                            + "Book ID: " + bookID
-                            + "\nTitle: " + title
-                            + "\nAuthor: " + author
-                            + "\nCategory: " + category
-                            + "\nPublished Year: " + year
-                            + "\nQuantity: " + quantity
-            );
-
-            clearFields();
         }
 
+
+        bookIDs.add(normalizedID);
+
+        showAlert(
+                Alert.AlertType.INFORMATION,
+                "Book Added Successfully",
+                "Book details:\n\n"
+                        + "Book ID: " + bookID
+                        + "\nBook Title: " + title
+                        + "\nAuthor: " + author
+                        + "\nCategory: " + category
+                        + "\nPublished Year: " + year
+                        + "\nQuantity: " + quantity
+        );
+
+        clearFields();
     }
 
 
@@ -198,10 +172,7 @@ public class AddBookPageController {
         txtAuthor.clear();
         txtPublishedYear.clear();
         txtQuantity.clear();
-
-        if (comboBox != null) {
-            comboBox.getSelectionModel().clearSelection();
-        }
+        comboBox.getSelectionModel().clearSelection();
     }
 
 
@@ -219,15 +190,17 @@ public class AddBookPageController {
 
 
     private void loadPage(String fxmlFile) {
+
         try {
-            java.net.URL resource =
-                    getClass().getResource("/View/" + fxmlFile);
+            URL resource = getClass().getResource(
+                    "/View/" + fxmlFile
+            );
 
             if (resource == null) {
                 showAlert(
                         Alert.AlertType.ERROR,
                         "Navigation Error",
-                        "FXML file not found: " + fxmlFile
+                        "Cannot find FXML file:\n/View/" + fxmlFile
                 );
                 return;
             }
@@ -260,37 +233,66 @@ public class AddBookPageController {
 
     @FXML
     void btnAddMemberOnAction(ActionEvent event) {
-        loadPage("add_member_page.fxml");
-    }
-
-
-    @FXML
-    void btnManageMembersOnAction(ActionEvent event) {
-        loadPage("manage_members_page.fxml");
+        loadPage("add_member.fxml");
     }
 
 
     @FXML
     void btnIssueBookOnAction(ActionEvent event) {
-        loadPage("issue_book_page.fxml");
+        loadPage("issue_book.fxml");
+    }
+
+
+    @FXML
+    void btnManageMembersOnAction(ActionEvent event) {
+        loadPage("manage_members.fxml");
     }
 
 
     @FXML
     void btnReturnBookOnAction(ActionEvent event) {
-        loadPage("return_book_page.fxml");
+        loadPage("return_book.fxml");
     }
 
 
     @FXML
     void btnBorrowingHistoryOnAction(ActionEvent event) {
-        loadPage("borrowing_history_page.fxml");
+        loadPage("borrowing_history.fxml");
     }
 
 
     @FXML
     void btnLoginOnAction(ActionEvent event) {
-       loadPage("login_page.fxml");
+        logout();
     }
 
+
+    @FXML
+    void btnLogoutIconOnAction(ActionEvent event) {
+        logout();
+    }
+
+    private void logout() {
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Logout");
+        alert.setHeaderText("Confirm Logout");
+        alert.setContentText("Are you sure you want to log out?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+
+        if (result.isPresent()
+                && result.get() == ButtonType.OK) {
+            loadPage("login_page.fxml");
+        }
+    }
+
+    @FXML
+    void btnUserIconOnAction(ActionEvent event) {
+        showAlert(
+                Alert.AlertType.INFORMATION,
+                "User Information",
+                "Logged-in user: Admin"
+        );
+    }
 }
