@@ -137,12 +137,11 @@ public class AddBookPageController {
                     title,
                     author,
                     category,
-                    null,
+                    year,
                     quantity
             );
 
-
-            book.setPublishedYear(year);
+            bookDAO.addBook(book);
 
             boolean saved = bookDAO.addBook(book);
 
