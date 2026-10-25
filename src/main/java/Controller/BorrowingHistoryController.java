@@ -1,24 +1,31 @@
 package Controller;
 
+import DAO.BorrowingDAO;
+import Model.Borrowing;
+import Util.NavigatableController;
+import Util.PageNavigator;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Pagination;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.AnchorPane;
 
-import java.io.IOException;
-import java.net.URL;
-import java.time.LocalDate;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class BorrowingHistoryController {
+public class BorrowingHistoryController
+        implements NavigatableController {
 
     @FXML private Button btnAddBook;
     @FXML private Button btnAddMember;
@@ -46,11 +53,19 @@ public class BorrowingHistoryController {
 
     private static final int ROWS_PER_PAGE = 5;
 
+    private final BorrowingDAO borrowingDAO = new BorrowingDAO();
+
+    private PageNavigator navigator;
+
     private final ObservableList<BorrowRecord> allRecords =
             FXCollections.observableArrayList();
 
-    private List<BorrowRecord> filteredRecords =
-            new ArrayList<>();
+    private List<BorrowRecord> filteredRecords = new ArrayList<>();
+
+    @Override
+    public void setNavigator(PageNavigator navigator) {
+        this.navigator = navigator;
+    }
 
     public static class BorrowRecord {
 
@@ -109,18 +124,17 @@ public class BorrowingHistoryController {
         }
     }
 
-
     @FXML
     public void initialize() {
 
         createTableColumns();
-        loadSampleData();
+        loadRecordsFromDatabase();
 
         filteredRecords = new ArrayList<>(allRecords);
 
         lblRecordingInfo.setPageFactory(pageIndex -> {
             displayPage(pageIndex);
-            return new AnchorPane();
+            return new javafx.scene.layout.AnchorPane();
         });
 
         updatePagination();
@@ -150,85 +164,42 @@ public class BorrowingHistoryController {
                 new PropertyValueFactory<>("status"));
 
         tblBorrowingHistory.setColumnResizePolicy(
-                TableView.CONSTRAINED_RESIZE_POLICY
-        );
+                TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
-    private void loadSampleData() {
+    private void loadRecordsFromDatabase() {
 
         allRecords.clear();
 
-        LocalDate today = LocalDate.now();
+        try {
+            List<Borrowing> records =
+                    borrowingDAO.getAllBorrowings();
 
-        allRecords.add(new BorrowRecord(
-                "BR001",
-                "Harry Potter",
-                "Nimesha Perera",
-                today.minusDays(20).toString(),
-                today.minusDays(6).toString(),
-                "-",
-                "Overdue"
-        ));
+            for (Borrowing record : records) {
+                allRecords.add(new BorrowRecord(
+                        record.getBorrowingCode(),
+                        record.getBookTitle(),
+                        record.getMemberName(),
+                        formatDate(record.getIssueDate()),
+                        formatDate(record.getDueDate()),
+                        formatDate(record.getReturnDate()),
+                        record.getStatus()
+                ));
+            }
 
-        allRecords.add(new BorrowRecord(
-                "BR002",
-                "Introduction to Java",
-                "Kasun Silva",
-                today.minusDays(3).toString(),
-                today.plusDays(11).toString(),
-                "-",
-                "Borrowed"
-        ));
+        } catch (SQLException e) {
+            e.printStackTrace();
 
-        allRecords.add(new BorrowRecord(
-                "BR003",
-                "Clean Code",
-                "Dulani Fernando",
-                today.minusDays(15).toString(),
-                today.minusDays(1).toString(),
-                today.toString(),
-                "Returned"
-        ));
+            showAlert(
+                    Alert.AlertType.ERROR,
+                    "Database Error",
+                    "Unable to load borrowing history.\n"
+                            + e.getMessage());
+        }
+    }
 
-        allRecords.add(new BorrowRecord(
-                "BR004",
-                "Database Systems",
-                "Sanduni Wijesekara",
-                today.minusDays(2).toString(),
-                today.plusDays(12).toString(),
-                "-",
-                "Borrowed"
-        ));
-
-        allRecords.add(new BorrowRecord(
-                "BR005",
-                "Computer Networks",
-                "Tharindu Jayasinghe",
-                today.minusDays(25).toString(),
-                today.minusDays(11).toString(),
-                today.minusDays(12).toString(),
-                "Returned"
-        ));
-
-        allRecords.add(new BorrowRecord(
-                "BR006",
-                "Operating Systems",
-                "Amali Perera",
-                today.minusDays(18).toString(),
-                today.minusDays(4).toString(),
-                "-",
-                "Overdue"
-        ));
-
-        allRecords.add(new BorrowRecord(
-                "BR007",
-                "Software Engineering",
-                "Ravindu Silva",
-                today.minusDays(1).toString(),
-                today.plusDays(13).toString(),
-                "-",
-                "Borrowed"
-        ));
+    private String formatDate(java.time.LocalDate date) {
+        return date == null ? "-" : date.toString();
     }
 
     private void updatePagination() {
@@ -237,19 +208,15 @@ public class BorrowingHistoryController {
                 1,
                 (int) Math.ceil(
                         (double) filteredRecords.size()
-                                / ROWS_PER_PAGE
-                )
-        );
+                                / ROWS_PER_PAGE));
 
         lblRecordingInfo.setPageCount(totalPages);
 
-        int currentPage = lblRecordingInfo.getCurrentPageIndex();
-
-        if (currentPage >= totalPages) {
+        if (lblRecordingInfo.getCurrentPageIndex() >= totalPages) {
             lblRecordingInfo.setCurrentPageIndex(totalPages - 1);
-        } else {
-            displayPage(currentPage);
         }
+
+        displayPage(lblRecordingInfo.getCurrentPageIndex());
     }
 
     private void displayPage(int pageIndex) {
@@ -258,22 +225,17 @@ public class BorrowingHistoryController {
 
         if (fromIndex >= filteredRecords.size()) {
             tblBorrowingHistory.setItems(
-                    FXCollections.observableArrayList()
-            );
+                    FXCollections.observableArrayList());
             return;
         }
 
         int toIndex = Math.min(
                 fromIndex + ROWS_PER_PAGE,
-                filteredRecords.size()
-        );
+                filteredRecords.size());
 
-        ObservableList<BorrowRecord> pageData =
+        tblBorrowingHistory.setItems(
                 FXCollections.observableArrayList(
-                        filteredRecords.subList(fromIndex, toIndex)
-                );
-
-        tblBorrowingHistory.setItems(pageData);
+                        filteredRecords.subList(fromIndex, toIndex)));
     }
 
     @FXML
@@ -295,8 +257,7 @@ public class BorrowingHistoryController {
                                     || record.getMemberName()
                                     .toLowerCase().contains(keyword)
                                     || record.getStatus()
-                                    .toLowerCase().contains(keyword)
-                    )
+                                    .toLowerCase().contains(keyword))
                     .collect(Collectors.toList());
         }
 
@@ -306,41 +267,38 @@ public class BorrowingHistoryController {
 
     @FXML
     void btnDashboardOnAction(ActionEvent event) {
-        loadPage("dashboard.fxml");
+        navigateTo("dashboard");
     }
 
     @FXML
     void btnAddBookOnAction(ActionEvent event) {
-        loadPage("add_book_page.fxml");
+        navigateTo("add_book_page");
     }
 
     @FXML
     void btnAddMemberOnAction(ActionEvent event) {
-        loadPage("add_member.fxml");
+        navigateTo("add_member");
     }
 
     @FXML
     void btnIssueBookOnAction(ActionEvent event) {
-        loadPage("issue_book.fxml");
+        navigateTo("issue_book");
     }
-
 
     @FXML
     void btnReturnBookOnAction(ActionEvent event) {
-        loadPage("return_book.fxml");
+        navigateTo("return_book");
     }
-
 
     @FXML
     void btnManageMembersOnAction(ActionEvent event) {
-        loadPage("manage_members.fxml");
+        navigateTo("manage_members");
     }
 
     @FXML
     void btnBorrowingHistoryOnACtion(ActionEvent event) {
-        loadPage("borrowing_history.fxml");
+        navigateTo("borrowing_history");
     }
-
 
     @FXML
     void btnLogoutOnAction(ActionEvent event) {
@@ -355,7 +313,6 @@ public class BorrowingHistoryController {
     private void logout() {
 
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-
         alert.setTitle("Logout");
         alert.setHeaderText("Confirm Logout");
         alert.setContentText("Are you sure you want to log out?");
@@ -364,71 +321,29 @@ public class BorrowingHistoryController {
 
         if (result.isPresent()
                 && result.get() == ButtonType.OK) {
-            loadPage("login_page.fxml");
+            navigateTo("login_page");
         }
     }
 
     @FXML
     void btnUserIconOnAction(ActionEvent event) {
-
         showAlert(
                 Alert.AlertType.INFORMATION,
                 "User Information",
-                "Logged-in user: Admin"
-        );
+                "Logged-in user: Admin");
     }
 
-    private void loadPage(String fxmlFile) {
+    private void navigateTo(String pageName) {
 
-        try {
-            URL resource = getClass().getResource(
-                    "/View/" + fxmlFile
-            );
-
-            if (resource == null) {
-                showAlert(
-                        Alert.AlertType.ERROR,
-                        "Navigation Error",
-                        "FXML file not found: /View/" + fxmlFile
-                );
-                return;
-            }
-
-            Parent page = FXMLLoader.load(resource);
-
-            AnchorPane rootPane = findRootPane();
-
-            if (rootPane == null) {
-                showAlert(
-                        Alert.AlertType.ERROR,
-                        "Navigation Error",
-                        "Root navigation pane was not found."
-                );
-                return;
-            }
-
-            rootPane.getChildren().setAll(page);
-
-            AnchorPane.setTopAnchor(page, 0.0);
-            AnchorPane.setRightAnchor(page, 0.0);
-            AnchorPane.setBottomAnchor(page, 0.0);
-            AnchorPane.setLeftAnchor(page, 0.0);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-
+        if (navigator == null) {
             showAlert(
                     Alert.AlertType.ERROR,
                     "Navigation Error",
-                    "Unable to load " + fxmlFile
-            );
+                    "The shared PageNavigator has not been initialized.");
+            return;
         }
-    }
 
-    private AnchorPane findRootPane() {
-
-        return (AnchorPane) tblBorrowingHistory.getScene()
-                .lookup("#rootPane");
+        navigator.navigate(pageName);
     }
 
     private void showAlert(
