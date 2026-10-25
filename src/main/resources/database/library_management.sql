@@ -34,3 +34,5 @@ CREATE TABLE IF NOT EXISTS borrowings (
     FOREIGN KEY (book_id) REFERENCES books(id),
     FOREIGN KEY (member_id) REFERENCES members(id)
 );
+ALTER TABLE books
+ADD COLUMN published_year INT NULL;
