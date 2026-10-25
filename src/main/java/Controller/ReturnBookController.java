@@ -1,9 +1,13 @@
 package Controller;
 
+import DAO.BorrowingDAO;
+import Model.Borrowing;
+import Util.NavigatableController;
+import Util.PageNavigator;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -11,16 +15,17 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.URL;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
-public class ReturnBookController {
+public class ReturnBookController implements NavigatableController {
 
     @FXML private Button btnAddBook;
     @FXML private Button btnAddMember;
@@ -47,145 +52,117 @@ public class ReturnBookController {
     @FXML private AnchorPane rootPane;
     @FXML private TextField txtEnterBorrowID;
 
-    private static final Map<String, BorrowRecord> borrowRecords =
-            new HashMap<>();
+    private final BorrowingDAO borrowingDAO = new BorrowingDAO();
 
-    private BorrowRecord currentRecord;
+    private Borrowing currentRecord;
+    private PageNavigator navigator;
 
-    private static class BorrowRecord {
-        String borrowID;
-        String bookTitle;
-        String memberID;
-        String memberName;
-        String phone;
-        LocalDate borrowDate;
-        LocalDate dueDate;
-        boolean returned;
-
-        BorrowRecord(
-                String borrowID,
-                String bookTitle,
-                String memberID,
-                String memberName,
-                String phone,
-                LocalDate borrowDate,
-                LocalDate dueDate) {
-
-            this.borrowID = borrowID;
-            this.bookTitle = bookTitle;
-            this.memberID = memberID;
-            this.memberName = memberName;
-            this.phone = phone;
-            this.borrowDate = borrowDate;
-            this.dueDate = dueDate;
-            this.returned = false;
-        }
+    @Override
+    public void setNavigator(PageNavigator navigator) {
+        this.navigator = navigator;
     }
 
     @FXML
     public void initialize() {
-
-
-        if (borrowRecords.isEmpty()) {
-            LocalDate today = LocalDate.now();
-
-            borrowRecords.put(
-                    "BR001",
-                    new BorrowRecord(
-                            "BR001",
-                            "Harry Potter",
-                            "M001",
-                            "Nimesha Perera",
-                            "0771234567",
-                            today.minusDays(20),
-                            today.minusDays(6)
-                    )
-            );
-
-            borrowRecords.put(
-                    "BR002",
-                    new BorrowRecord(
-                            "BR002",
-                            "Introduction to Java",
-                            "M002",
-                            "Kasun Silva",
-                            "0712345678",
-                            today.minusDays(3),
-                            today.plusDays(11)
-                    )
-            );
-        }
-
         dpReturnDate.setValue(LocalDate.now());
+
+        dpReturnDate.valueProperty().addListener(
+                (observable, oldDate, newDate) -> updateLateDays()
+        );
+
         clearDetails();
     }
 
-
     @FXML
     void btnSearchOnAction(ActionEvent event) {
+        String borrowingCode = txtEnterBorrowID.getText() == null
+                ? ""
+                : txtEnterBorrowID.getText().trim().toUpperCase();
 
-        String borrowID = txtEnterBorrowID.getText()
-                .trim()
-                .toUpperCase();
-
-        if (borrowID.isEmpty()) {
+        if (borrowingCode.isEmpty()) {
             showAlert(
                     Alert.AlertType.WARNING,
                     "Missing Borrow ID",
-                    "Please enter a Borrow ID."
+                    "Please enter a borrowing ID, for example BR0001."
             );
             return;
         }
 
-        BorrowRecord record = borrowRecords.get(borrowID);
+        try {
+            currentRecord = findBorrowing(borrowingCode);
 
-        if (record == null) {
+            if (currentRecord == null) {
+                clearDetails();
+
+                showAlert(
+                        Alert.AlertType.WARNING,
+                        "Record Not Found",
+                        "No borrowing record was found for "
+                                + borrowingCode + "."
+                );
+                return;
+            }
+
+            displayRecord(currentRecord);
+
+            if (isReturned(currentRecord)) {
+                showAlert(
+                        Alert.AlertType.INFORMATION,
+                        "Already Returned",
+                        "This book has already been returned."
+                );
+            }
+
+        } catch (SQLException e) {
             currentRecord = null;
             clearDetails();
 
             showAlert(
-                    Alert.AlertType.WARNING,
-                    "Record Not Found",
-                    "No borrowing record was found for "
-                            + borrowID + "."
+                    Alert.AlertType.ERROR,
+                    "Database Error",
+                    "Unable to search borrowing records.\n"
+                            + e.getMessage()
             );
-            return;
         }
-
-        if (record.returned) {
-            currentRecord = null;
-            displayRecord(record);
-
-            showAlert(
-                    Alert.AlertType.INFORMATION,
-                    "Already Returned",
-                    "This book has already been returned."
-            );
-            return;
-        }
-
-        currentRecord = record;
-        displayRecord(record);
     }
 
+    private Borrowing findBorrowing(String borrowingCode)
+            throws SQLException {
 
-    private void displayRecord(BorrowRecord record) {
+        for (Borrowing borrowing : borrowingDAO.getAllBorrowings()) {
+            if (borrowing.getBorrowingCode() != null
+                    && borrowing.getBorrowingCode()
+                    .equalsIgnoreCase(borrowingCode)) {
+                return borrowing;
+            }
+        }
 
-        lblBorrowBook.setText(record.bookTitle);
-        lblMemberID.setText(record.memberID);
-        lblName.setText(record.memberName);
-        lblPhone.setText(record.phone);
-        lblBorrowDate.setText(record.borrowDate.toString());
-        lblDueDate.setText(record.dueDate.toString());
+        return null;
+    }
+
+    private void displayRecord(Borrowing record) {
+        lblBorrowBook.setText(textOrDash(record.getBookTitle()));
+
+        lblMemberID.setText(getMemberCode(record));
+        lblName.setText(textOrDash(record.getMemberName()));
+        lblPhone.setText(getMemberPhone(record));
+
+        lblBorrowDate.setText(dateOrDash(record.getIssueDate()));
+        lblDueDate.setText(dateOrDash(record.getDueDate()));
 
         updateLateDays();
     }
 
-
     private void updateLateDays() {
-
-        if (currentRecord == null || dpReturnDate.getValue() == null) {
+        if (currentRecord == null
+                || dpReturnDate.getValue() == null
+                || currentRecord.getDueDate() == null) {
             lblLate.setText("-");
+            return;
+        }
+
+        if (isReturned(currentRecord)) {
+            lblLate.setText("Already returned");
             return;
         }
 
@@ -194,22 +171,20 @@ public class ReturnBookController {
         long lateDays = Math.max(
                 0,
                 ChronoUnit.DAYS.between(
-                        currentRecord.dueDate,
+                        currentRecord.getDueDate(),
                         returnDate
                 )
         );
 
-        if (lateDays == 0) {
-            lblLate.setText("Not overdue");
-        } else {
-            lblLate.setText(lateDays + " day(s) overdue");
-        }
+        lblLate.setText(
+                lateDays == 0
+                        ? "Not overdue"
+                        : lateDays + " day(s) overdue"
+        );
     }
-
 
     @FXML
     void btnReturnBookOnAction(ActionEvent event) {
-
         if (currentRecord == null) {
             showAlert(
                     Alert.AlertType.WARNING,
@@ -219,7 +194,7 @@ public class ReturnBookController {
             return;
         }
 
-        if (currentRecord.returned) {
+        if (isReturned(currentRecord)) {
             showAlert(
                     Alert.AlertType.INFORMATION,
                     "Already Returned",
@@ -239,34 +214,47 @@ public class ReturnBookController {
             return;
         }
 
-        if (returnDate.isBefore(currentRecord.borrowDate)) {
+        if (currentRecord.getIssueDate() != null
+                && returnDate.isBefore(currentRecord.getIssueDate())) {
             showAlert(
                     Alert.AlertType.WARNING,
                     "Invalid Return Date",
-                    "Return date cannot be before the borrow date."
+                    "Return date cannot be before the issue date."
             );
             return;
         }
 
-        long lateDays = Math.max(
-                0,
-                ChronoUnit.DAYS.between(
-                        currentRecord.dueDate,
-                        returnDate
-                )
-        );
+        if (returnDate.isAfter(LocalDate.now())) {
+            showAlert(
+                    Alert.AlertType.WARNING,
+                    "Invalid Return Date",
+                    "Return date cannot be in the future."
+            );
+            return;
+        }
 
-        Alert confirmation = new Alert(
-                Alert.AlertType.CONFIRMATION
-        );
+        long lateDays = 0;
+
+        if (currentRecord.getDueDate() != null) {
+            lateDays = Math.max(
+                    0,
+                    ChronoUnit.DAYS.between(
+                            currentRecord.getDueDate(),
+                            returnDate
+                    )
+            );
+        }
+
+        Alert confirmation =
+                new Alert(Alert.AlertType.CONFIRMATION);
 
         confirmation.setTitle("Confirm Return");
         confirmation.setHeaderText("Confirm Book Return");
-
         confirmation.setContentText(
-                "Book: " + currentRecord.bookTitle
-                        + "\nBorrow ID: " + currentRecord.borrowID
-                        + "\nMember: " + currentRecord.memberName
+                "Book: " + currentRecord.getBookTitle()
+                        + "\nBorrow ID: "
+                        + currentRecord.getBorrowingCode()
+                        + "\nMember: " + currentRecord.getMemberName()
                         + "\nReturn Date: " + returnDate
                         + "\nOverdue Days: " + lateDays
                         + "\n\nConfirm this return?"
@@ -274,29 +262,74 @@ public class ReturnBookController {
 
         Optional<ButtonType> result = confirmation.showAndWait();
 
-        if (result.isPresent()
-                && result.get() == ButtonType.OK) {
+        if (!result.isPresent()
+                || result.get() != ButtonType.OK) {
+            return;
+        }
 
-            currentRecord.returned = true;
+        try {
 
-            showAlert(
-                    Alert.AlertType.INFORMATION,
-                    "Return Successful",
-                    "Book return processed successfully.\n\n"
-                            + "Book: " + currentRecord.bookTitle
-                            + "\nMember: " + currentRecord.memberName
-                            + "\nOverdue Days: " + lateDays
+            boolean success = borrowingDAO.returnBook(
+                    currentRecord.getBorrowingCode()
             );
 
-            currentRecord = null;
-            clearDetails();
-            txtEnterBorrowID.clear();
+            if (success) {
+                showAlert(
+                        Alert.AlertType.INFORMATION,
+                        "Return Successful",
+                        "Book return processed successfully.\n\n"
+                                + "Book: " + currentRecord.getBookTitle()
+                                + "\nMember: "
+                                + currentRecord.getMemberName()
+                                + "\nOverdue Days: " + lateDays
+                );
+
+                currentRecord = null;
+                txtEnterBorrowID.clear();
+                dpReturnDate.setValue(LocalDate.now());
+                clearDetails();
+
+            } else {
+                showAlert(
+                        Alert.AlertType.WARNING,
+                        "Return Not Processed",
+                        "The borrowing record could not be returned."
+                );
+            }
+
+        } catch (SQLException e) {
+            showAlert(
+                    Alert.AlertType.ERROR,
+                    "Return Failed",
+                    "Unable to process the book return.\n"
+                            + e.getMessage()
+            );
         }
     }
 
+    private boolean isReturned(Borrowing record) {
+        return record.getStatus() != null
+                && record.getStatus().equalsIgnoreCase("Returned");
+    }
+
+    private String textOrDash(String value) {
+        return value == null || value.trim().isEmpty()
+                ? "-" : value;
+    }
+
+    private String dateOrDash(LocalDate date) {
+        return date == null ? "-" : date.toString();
+    }
+
+    private String getMemberCode(Borrowing record) {
+        return "-";
+    }
+
+    private String getMemberPhone(Borrowing record) {
+        return "-";
+    }
 
     private void clearDetails() {
-
         lblBorrowBook.setText("-");
         lblMemberID.setText("-");
         lblName.setText("-");
@@ -306,84 +339,47 @@ public class ReturnBookController {
         lblLate.setText("-");
     }
 
-
-    private void showAlert(
-            Alert.AlertType type,
-            String title,
-            String message) {
-
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-
-    private void loadPage(String fxmlFile) {
-
-        try {
-            URL resource = getClass().getResource(
-                    "/View/" + fxmlFile
-            );
-
-            if (resource == null) {
-                showAlert(
-                        Alert.AlertType.ERROR,
-                        "Navigation Error",
-                        "FXML file not found: /View/" + fxmlFile
-                );
-                return;
-            }
-
-            Parent page = FXMLLoader.load(resource);
-
-            rootPane.getChildren().setAll(page);
-
-            AnchorPane.setTopAnchor(page, 0.0);
-            AnchorPane.setRightAnchor(page, 0.0);
-            AnchorPane.setBottomAnchor(page, 0.0);
-            AnchorPane.setLeftAnchor(page, 0.0);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-
+    private void navigate(String pageName) {
+        if (navigator == null) {
             showAlert(
                     Alert.AlertType.ERROR,
                     "Navigation Error",
-                    "Unable to load " + fxmlFile
+                    "PageNavigator was not injected into this controller."
             );
+            return;
         }
+
+        navigator.navigate(pageName);
     }
 
     @FXML
     void btnDashboardOnAction(ActionEvent event) {
-        loadPage("dashboard.fxml");
+        navigate("dashboard_home");
     }
 
     @FXML
     void btnAddBookOnAction(ActionEvent event) {
-        loadPage("add_book_page.fxml");
+        navigate("add_book_page");
     }
 
     @FXML
     void btnAddMemberOnAction(ActionEvent event) {
-        loadPage("add_member.fxml");
+        navigate("add_member");
     }
 
     @FXML
     void btnIssueBookOnAction(ActionEvent event) {
-        loadPage("issue_book.fxml");
+        navigate("issue_book");
     }
 
     @FXML
     void btnManageMembersOnAction(ActionEvent event) {
-        loadPage("manage_members.fxml");
+        navigate("manage_members");
     }
 
     @FXML
     void btnBorrowingHistoryOnACtion(ActionEvent event) {
-        loadPage("borrowing_history.fxml");
+        navigate("borrowing_history");
     }
 
     @FXML
@@ -397,31 +393,57 @@ public class ReturnBookController {
     }
 
     private void logout() {
-
-        Alert alert = new Alert(
-                Alert.AlertType.CONFIRMATION
-        );
-
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Logout");
         alert.setHeaderText("Confirm Logout");
         alert.setContentText("Are you sure you want to log out?");
 
         Optional<ButtonType> result = alert.showAndWait();
 
-        if (result.isPresent()
-                && result.get() == ButtonType.OK) {
-            loadPage("login_page.fxml");
+        if (!result.isPresent()
+                || result.get() != ButtonType.OK) {
+            return;
+        }
+
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/View/login_page.fxml")
+            );
+
+            Parent loginPage = loader.load();
+            Stage stage = (Stage) rootPane.getScene().getWindow();
+
+            stage.setScene(new Scene(loginPage));
+            stage.show();
+
+        } catch (IOException e) {
+            showAlert(
+                    Alert.AlertType.ERROR,
+                    "Logout Error",
+                    "Unable to load the login page.\n"
+                            + e.getMessage()
+            );
         }
     }
 
     @FXML
     void btnUserIconOnAction(ActionEvent event) {
-
         showAlert(
                 Alert.AlertType.INFORMATION,
                 "User Information",
                 "Logged-in user: Admin"
         );
     }
-}
 
+    private void showAlert(
+            Alert.AlertType type,
+            String title,
+            String message) {
+
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+}
