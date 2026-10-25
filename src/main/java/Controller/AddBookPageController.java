@@ -3,7 +3,7 @@ package Controller;
 import DAO.BookDAO;
 import Model.Book;
 import Util.PageNavigator;
-
+import Util.NavigatableController;
 import java.sql.SQLException;
 import java.time.Year;
 import java.util.Optional;
@@ -17,7 +17,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 
-public class AddBookPageController {
+public class AddBookPageController  implements NavigatableController {
 
     @FXML private Button btnAdd;
     @FXML private Button btnAddBook;
