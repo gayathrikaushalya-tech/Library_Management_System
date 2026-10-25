@@ -12,20 +12,14 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.net.URL;
 
 public class LoginPageController {
 
-    @FXML
-    private Button btnClear;
-
-    @FXML
-    private Button btnLogin;
-
-    @FXML
-    private PasswordField txtPassword;
-
-    @FXML
-    private TextField txtUsername;
+    @FXML private Button btnClear;
+    @FXML private Button btnLogin;
+    @FXML private PasswordField txtPassword;
+    @FXML private TextField txtUsername;
 
     @FXML
     void btnClearOnAction(ActionEvent event) {
@@ -36,15 +30,14 @@ public class LoginPageController {
 
     @FXML
     void btnLoginOnAction(ActionEvent event) {
+
         String username = txtUsername.getText().trim();
         String password = txtPassword.getText();
 
-
         if (username.isEmpty() || password.isEmpty()) {
-            showAlert(
-                    Alert.AlertType.WARNING, "Missing Information",
-                    "Please enter both username and password."
-            );
+            showAlert(Alert.AlertType.WARNING,
+                    "Missing Information",
+                    "Please enter both username and password.");
             return;
         }
 
@@ -52,30 +45,39 @@ public class LoginPageController {
         if (username.equals("admin")
                 && password.equals("admin123")) {
 
-            showAlert(
-                    Alert.AlertType.INFORMATION,
-                    "Login Successful",
-                    "Welcome to the Library Management System!"
-            );
             try {
-                Parent root = FXMLLoader.load(
-                        getClass().getResource("/View/dashboard.fxml")
-                );
+                URL resource =
+                        getClass().getResource("/View/dashboard.fxml");
 
-                Stage stage = (Stage) btnLogin.getScene().getWindow();
+                if (resource == null) {
+                    showAlert(Alert.AlertType.ERROR,
+                            "Navigation Error",
+                            "Cannot find /View/dashboard.fxml.");
+                    return;
+                }
+
+                Parent root = FXMLLoader.load(resource);
+
+                Stage stage =
+                        (Stage) btnLogin.getScene().getWindow();
+
                 stage.setScene(new Scene(root));
+                stage.setTitle("Library Management System");
                 stage.show();
 
             } catch (IOException e) {
                 e.printStackTrace();
+
+                showAlert(Alert.AlertType.ERROR,
+                        "Loading Error",
+                        "Unable to open the dashboard.\n"
+                                + e.getMessage());
             }
 
         } else {
-            showAlert(
-                    Alert.AlertType.ERROR,
+            showAlert(Alert.AlertType.ERROR,
                     "Login Failed",
-                    "Invalid username or password. Please try again."
-            );
+                    "Invalid username or password.");
 
             txtPassword.clear();
             txtPassword.requestFocus();
@@ -93,6 +95,4 @@ public class LoginPageController {
         alert.setContentText(message);
         alert.showAndWait();
     }
-    }
-
-
+}
