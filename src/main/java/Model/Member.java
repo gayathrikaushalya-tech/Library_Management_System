@@ -2,12 +2,25 @@ package Model;
 
 public class Member {
 
+    private int id;
     private String memberId;
     private String fullName;
     private String email;
     private String phoneNumber;
     private String address;
 
+    public Member() {
+    }
+
+    public Member(String fullName, String email,
+                  String phoneNumber, String address) {
+        this.fullName = fullName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+    }
+
+    // Keep compatibility with your original constructor
     public Member(String memberId, String fullName,
                   String email, String phoneNumber,
                   String address) {
@@ -16,6 +29,14 @@ public class Member {
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.address = address;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getMemberId() {
