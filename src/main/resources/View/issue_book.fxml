@@ -100,7 +100,7 @@
                         <Font name="Segoe UI Bold" size="18.0" />
                      </font>
                   </Button>
-                  <Button fx:id="btnBorrowingHistory" alignment="CENTER" mnemonicParsing="false" onAction="#btnBorrowingHistoryOnACtion" prefHeight="50.0" prefWidth="260.0" style="-fx-background-color: #a8f7fa;" text="🕘 Borrowing History">
+                  <Button fx:id="btnBorrowingHistory" alignment="CENTER" mnemonicParsing="false" onAction="#btnBorrowingHistoryOnAction" prefHeight="50.0" prefWidth="260.0" style="-fx-background-color: #a8f7fa;" text="🕘 Borrowing History">
                      <VBox.margin>
                         <Insets />
                      </VBox.margin>

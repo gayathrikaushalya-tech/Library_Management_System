@@ -1,0 +1,250 @@
+/* =========================================
+LIBRARY MANAGEMENT SYSTEM - COMMON STYLE
+========================================= */
+
+/* Main application background */
+.root {
+-fx-font-family: "Segoe UI", Arial, sans-serif;
+-fx-background-color: #F4F6F9;
+-fx-font-size: 14px;
+}
+
+/* =========================================
+APPLICATION TITLE
+========================================= */
+
+.app-title {
+-fx-background-color: #FFFFFF;
+-fx-text-fill: #26354B;
+-fx-font-family: "Segoe UI Semibold", Arial, sans-serif;
+-fx-font-size: 28px;
+-fx-font-weight: bold;
+-fx-alignment: center;
+-fx-padding: 15px 20px;
+-fx-border-color: transparent transparent #DCE3EB transparent;
+-fx-border-width: 0 0 2px 0;
+}
+
+/* Small title / section heading */
+.section-title {
+-fx-text-fill: #26354B;
+-fx-font-size: 22px;
+-fx-font-weight: bold;
+-fx-padding: 0 0 12px 0;
+}
+
+/* =========================================
+SIDEBAR
+========================================= */
+
+.sidebar {
+-fx-background-color: #172B4D;
+-fx-padding: 18px 12px;
+-fx-spacing: 10px;
+-fx-pref-width: 230px;
+-fx-min-width: 210px;
+}
+
+.sidebar-brand {
+-fx-text-fill: #FFFFFF;
+-fx-font-size: 15px;
+-fx-font-weight: bold;
+-fx-padding: 8px 5px 22px 5px;
+}
+
+/* Sidebar navigation buttons */
+.sidebar-button {
+-fx-background-color: #F0F5FA;
+-fx-text-fill: #26354B;
+-fx-font-size: 15px;
+-fx-font-weight: bold;
+-fx-alignment: CENTER_LEFT;
+-fx-padding: 12px 14px;
+-fx-background-radius: 7px;
+-fx-border-radius: 7px;
+-fx-cursor: hand;
+-fx-max-width: Infinity;
+-fx-min-height: 42px;
+}
+
+/* Hover effect */
+.sidebar-button:hover {
+-fx-background-color: #D5E5F7;
+-fx-text-fill: #102746;
+}
+
+/* Selected/current page */
+.sidebar-button-active {
+-fx-background-color: #6CA6E8;
+-fx-text-fill: #FFFFFF;
+}
+
+/* Logout button */
+.logout-button {
+-fx-background-color: #F0F5FA;
+-fx-text-fill: #9B2938;
+-fx-font-weight: bold;
+-fx-background-radius: 7px;
+-fx-cursor: hand;
+}
+
+.logout-button:hover {
+-fx-background-color: #F9DCDD;
+}
+
+/* =========================================
+MAIN CONTENT
+========================================= */
+
+.content-pane {
+-fx-background-color: #F4F6F9;
+-fx-padding: 22px;
+}
+
+/* White panels/cards */
+.content-card {
+-fx-background-color: #FFFFFF;
+-fx-background-radius: 12px;
+-fx-padding: 20px;
+-fx-border-color: #E0E6ED;
+-fx-border-radius: 12px;
+}
+
+/* =========================================
+DASHBOARD SUMMARY CARDS
+========================================= */
+
+.stat-card {
+-fx-background-radius: 10px;
+-fx-padding: 20px;
+-fx-alignment: CENTER;
+}
+
+.stat-card-blue {
+-fx-background-color: #DDF3F7;
+}
+
+.stat-card-green {
+-fx-background-color: #E4F3B5;
+}
+
+.stat-card-pink {
+-fx-background-color: #F6D7E8;
+}
+
+.stat-title {
+-fx-text-fill: #29384D;
+-fx-font-size: 17px;
+-fx-font-weight: bold;
+}
+
+.stat-number {
+-fx-text-fill: #172B4D;
+-fx-font-size: 30px;
+-fx-font-weight: bold;
+}
+
+/* =========================================
+INPUT FIELDS
+========================================= */
+
+.text-field,
+.password-field,
+.text-area,
+.combo-box,
+.date-picker {
+-fx-background-color: #FFFFFF;
+-fx-border-color: #C8D2DF;
+-fx-border-radius: 6px;
+-fx-background-radius: 6px;
+-fx-padding: 9px;
+-fx-font-size: 14px;
+}
+
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused,
+.date-picker:focused {
+-fx-border-color: #4C8DCE;
+-fx-border-width: 1.5px;
+}
+
+/* =========================================
+ACTION BUTTONS
+========================================= */
+
+.primary-button {
+-fx-background-color: #315F9E;
+-fx-text-fill: #FFFFFF;
+-fx-font-size: 14px;
+-fx-font-weight: bold;
+-fx-padding: 10px 18px;
+-fx-background-radius: 6px;
+-fx-cursor: hand;
+}
+
+.primary-button:hover {
+-fx-background-color: #244A7D;
+}
+
+.secondary-button {
+-fx-background-color: #E3EAF2;
+-fx-text-fill: #26354B;
+-fx-font-weight: bold;
+-fx-padding: 10px 18px;
+-fx-background-radius: 6px;
+-fx-cursor: hand;
+}
+
+.delete-button {
+-fx-background-color: #B83A48;
+-fx-text-fill: #FFFFFF;
+-fx-font-weight: bold;
+-fx-background-radius: 6px;
+-fx-cursor: hand;
+}
+
+/* =========================================
+TABLES
+========================================= */
+
+.table-view {
+-fx-background-color: #FFFFFF;
+-fx-border-color: #DCE3EB;
+-fx-border-radius: 7px;
+-fx-background-radius: 7px;
+}
+
+.table-view .column-header-background {
+-fx-background-color: #172B4D;
+}
+
+.table-view .column-header,
+.table-view .filler {
+-fx-background-color: #172B4D;
+-fx-size: 38px;
+}
+
+.table-view .column-header .label {
+-fx-text-fill: #FFFFFF;
+-fx-font-weight: bold;
+-fx-alignment: CENTER_LEFT;
+}
+
+.table-row-cell {
+-fx-cell-size: 36px;
+}
+
+.table-row-cell:odd {
+-fx-background-color: #F5F8FC;
+}
+
+.table-row-cell:selected {
+-fx-background-color: #C9DDF5;
+-fx-text-fill: #172B4D;
+}
+
+/* General labels */
+.label {
+-fx-text-fill: #26354B;
+}

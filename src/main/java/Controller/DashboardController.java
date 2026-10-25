@@ -28,7 +28,10 @@ public class DashboardController implements NavigatableController {
 
     @FXML
     public void initialize() {
-        navigator = new PageNavigator(rootPane);
+
+        if (navigator == null) {
+            navigator = new PageNavigator(rootPane);
+        }
     }
 
     @Override
@@ -38,7 +41,7 @@ public class DashboardController implements NavigatableController {
 
     @FXML
     void btnDashboardOnAction(ActionEvent event) {
-        navigateTo("dashboard_home");
+        navigateTo("dashboard");
     }
 
     @FXML
@@ -52,6 +55,11 @@ public class DashboardController implements NavigatableController {
     }
 
     @FXML
+    void btnManageMembersOnAction(ActionEvent event) {
+        navigateTo("manage_members");
+    }
+
+    @FXML
     void btnIssueBookOnAction(ActionEvent event) {
         navigateTo("issue_book");
     }
@@ -62,18 +70,12 @@ public class DashboardController implements NavigatableController {
     }
 
     @FXML
-    void btnManageMembersOnAction(ActionEvent event) {
-        navigateTo("manage_members");
-    }
-
-    @FXML
     void btnBorrowingHistoryOnAction(ActionEvent event) {
         navigateTo("borrowing_history");
     }
 
     @FXML
     void btnLogoutOnAction(ActionEvent event) {
-
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Logout");
         alert.setHeaderText("Confirm Logout");
@@ -88,8 +90,19 @@ public class DashboardController implements NavigatableController {
     }
 
     private void navigateTo(String pageName) {
-        if (navigator != null) {
-            navigator.navigate(pageName);
+        if (navigator == null) {
+            showNavigationError();
+            return;
         }
+
+        navigator.navigate(pageName);
+    }
+
+    private void showNavigationError() {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Navigation Error");
+        alert.setHeaderText(null);
+        alert.setContentText("Page navigation has not been initialized.");
+        alert.showAndWait();
     }
 }

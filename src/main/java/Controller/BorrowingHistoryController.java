@@ -296,7 +296,7 @@ public class BorrowingHistoryController
     }
 
     @FXML
-    void btnBorrowingHistoryOnACtion(ActionEvent event) {
+    void btnBorrowingHistoryOnAction(ActionEvent event) {
         navigateTo("borrowing_history");
     }
 

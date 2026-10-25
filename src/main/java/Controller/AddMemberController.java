@@ -47,7 +47,7 @@ public class AddMemberController implements NavigatableController {
 
     @FXML
     public void initialize() {
-        // The database generates the member ID.
+
         txtMemberID.setEditable(false);
         txtMemberID.setPromptText("Auto-generated");
     }
@@ -152,7 +152,7 @@ public class AddMemberController implements NavigatableController {
     }
 
     @FXML
-    void btnBorrowingHistoryOnACtion(ActionEvent event) {
+    void btnBorrowingHistoryOnAction(ActionEvent event) {
         navigateTo("borrowing_history");
     }
 

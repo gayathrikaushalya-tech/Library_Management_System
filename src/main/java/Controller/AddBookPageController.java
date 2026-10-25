@@ -224,7 +224,7 @@ public class AddBookPageController  implements NavigatableController {
 
     @FXML
     void btnDashboardOnAction(ActionEvent event) {
-        navigateTo("dashboard_home");
+        navigateTo("dashboard");
     }
 
     @FXML

@@ -88,7 +88,7 @@
                         <Font name="System Bold" size="18.0" />
                      </font>
                   </Button>
-                  <Button fx:id="btnBorrowingHistory" mnemonicParsing="false" onAction="#btnBorrowingHistoryOnACtion" prefHeight="50.0" prefWidth="260.0" style="-fx-background-color: #a8f7fa;" text="🕘 Borrowing History">
+                  <Button fx:id="btnBorrowingHistory" mnemonicParsing="false" onAction="#btnBorrowingHistoryOnAction" prefHeight="50.0" prefWidth="260.0" style="-fx-background-color: #a8f7fa;" text="🕘 Borrowing History">
                      <font>
                         <Font name="System Bold" size="18.0" />
                      </font>

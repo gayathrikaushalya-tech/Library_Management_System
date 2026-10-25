@@ -53,7 +53,7 @@
                         <Font name="Segoe UI Bold" size="20.0" />
                      </font>
                   </Button>
-                  <Button fx:id="btnBorrowingHistory" mnemonicParsing="false" onAction="#btnBorrowingHistoryOnACtion" prefHeight="56.0" prefWidth="232.0" style="-fx-background-color: #a8f7fa;" text="🕘 Borrowing History">
+                  <Button fx:id="btnBorrowingHistory" mnemonicParsing="false" onAction="#btnBorrowingHistoryOnAction" prefHeight="56.0" prefWidth="232.0" style="-fx-background-color: #a8f7fa;" text="🕘 Borrowing History">
                      <font>
                         <Font name="Segoe UI Bold" size="20.0" />
                      </font>

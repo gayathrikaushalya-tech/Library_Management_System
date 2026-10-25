@@ -354,7 +354,7 @@ public class ReturnBookController implements NavigatableController {
 
     @FXML
     void btnDashboardOnAction(ActionEvent event) {
-        navigate("dashboard_home");
+        navigate("dashboard");
     }
 
     @FXML
@@ -378,7 +378,7 @@ public class ReturnBookController implements NavigatableController {
     }
 
     @FXML
-    void btnBorrowingHistoryOnACtion(ActionEvent event) {
+    void btnBorrowingHistoryOnAction(ActionEvent event) {
         navigate("borrowing_history");
     }
 

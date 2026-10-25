@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS books (
     author VARCHAR(150) NOT NULL,
     category VARCHAR(100),
     isbn VARCHAR(30),
+    published_year
     quantity INT NOT NULL DEFAULT 1,
     available_quantity INT NOT NULL DEFAULT 1
 );

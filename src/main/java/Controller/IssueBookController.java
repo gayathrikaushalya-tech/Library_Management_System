@@ -251,7 +251,7 @@ public class IssueBookController implements NavigatableController {
 
     @FXML
     void btnDashboardOnAction(ActionEvent event) {
-        navigateTo("dashboard_home");
+        navigateTo("dashboard");
     }
 
     @FXML
@@ -265,7 +265,7 @@ public class IssueBookController implements NavigatableController {
     }
 
     @FXML
-    void btnBorrowingHistoryOnACtion(ActionEvent event) {
+    void btnBorrowingHistoryOnAction(ActionEvent event) {
         navigateTo("borrowing_history");
     }
 
