@@ -11,6 +11,13 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.layout.AnchorPane;
 
 import java.util.Optional;
+import Util.DBConnection;
+import javafx.scene.control.Label;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class DashboardController implements NavigatableController {
 
@@ -23,6 +30,10 @@ public class DashboardController implements NavigatableController {
     @FXML private Button btnManageMembers;
     @FXML private Button btnReturnBook;
     @FXML private AnchorPane rootPane;
+    @FXML private Label lblTotalBooks;
+    @FXML private Label lblTotalMembers;
+    @FXML private Label lblBorrowedBooks;
+    @FXML private Label lblOverdueBooks;
 
     private PageNavigator navigator;
 
@@ -32,11 +43,77 @@ public class DashboardController implements NavigatableController {
         if (navigator == null) {
             navigator = new PageNavigator(rootPane);
         }
+
+        loadDashboardCounts();
     }
 
     @Override
     public void setNavigator(PageNavigator navigator) {
         this.navigator = navigator;
+    }
+    private void loadDashboardCounts() {
+
+        String totalBooksSQL =
+                "SELECT COALESCE(SUM(quantity), 0) FROM books";
+
+        String totalMembersSQL =
+                "SELECT COUNT(*) FROM members";
+
+        String borrowedBooksSQL =
+                "SELECT COUNT(*) FROM borrowings "
+                        + "WHERE status IS NULL OR status <> 'Returned'";
+
+        String overdueBooksSQL =
+                "SELECT COUNT(*) FROM borrowings "
+                        + "WHERE (status IS NULL OR status <> 'Returned') "
+                        + "AND due_date < CURDATE()";
+
+        try (Connection connection = DBConnection.getConnection()) {
+
+            lblTotalBooks.setText(
+                    getCount(connection, totalBooksSQL));
+
+            lblTotalMembers.setText(
+                    getCount(connection, totalMembersSQL));
+
+            lblBorrowedBooks.setText(
+                    getCount(connection, borrowedBooksSQL));
+
+            lblOverdueBooks.setText(
+                    getCount(connection, overdueBooksSQL));
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+
+            showDashboardError(
+                    "Unable to load dashboard statistics.\n"
+                            + e.getMessage());
+        }
+    }
+
+    private String getCount(
+            Connection connection,
+            String sql) throws SQLException {
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            if (resultSet.next()) {
+                return String.valueOf(resultSet.getInt(1));
+            }
+
+            return "0";
+        }
+    }
+
+    private void showDashboardError(String message) {
+
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Dashboard Database Error");
+        alert.setHeaderText("Unable to load statistics");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     @FXML

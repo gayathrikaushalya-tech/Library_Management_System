@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javafx.geometry.Side;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 
 public class BorrowingHistoryController
         implements NavigatableController {
@@ -61,6 +64,8 @@ public class BorrowingHistoryController
             FXCollections.observableArrayList();
 
     private List<BorrowRecord> filteredRecords = new ArrayList<>();
+
+    private final ContextMenu searchSuggestions = new ContextMenu();
 
     @Override
     public void setNavigator(PageNavigator navigator) {
@@ -136,6 +141,15 @@ public class BorrowingHistoryController
             displayPage(pageIndex);
             return new javafx.scene.layout.AnchorPane();
         });
+
+
+        txtSearch.textProperty().addListener(
+                (observable, oldValue, newValue) -> {
+                    lblRecordingInfo.setCurrentPageIndex(0);
+                    applySearch(newValue);
+                    showSearchSuggestions(newValue);
+                }
+        );
 
         updatePagination();
     }
@@ -238,31 +252,100 @@ public class BorrowingHistoryController
                         filteredRecords.subList(fromIndex, toIndex)));
     }
 
-    @FXML
-    void btnSearchOnAction(ActionEvent event) {
+    private void applySearch(String input) {
 
-        String keyword = txtSearch.getText()
-                .trim()
-                .toLowerCase();
+        String keyword = input == null
+                ? ""
+                : input.trim().toLowerCase();
 
         if (keyword.isEmpty()) {
             filteredRecords = new ArrayList<>(allRecords);
         } else {
             filteredRecords = allRecords.stream()
                     .filter(record ->
-                            record.getBorrowedID()
-                                    .toLowerCase().contains(keyword)
-                                    || record.getBookTitle()
-                                    .toLowerCase().contains(keyword)
-                                    || record.getMemberName()
-                                    .toLowerCase().contains(keyword)
-                                    || record.getStatus()
-                                    .toLowerCase().contains(keyword))
+                            safe(record.getBorrowedID()).contains(keyword)
+                                    || safe(record.getBookTitle()).contains(keyword)
+                                    || safe(record.getMemberName()).contains(keyword)
+                                    || safe(record.getStatus()).contains(keyword)
+                                    || safe(record.getBorrowDate()).contains(keyword)
+                                    || safe(record.getDueDate()).contains(keyword)
+                                    || safe(record.getReturnDate()).contains(keyword))
                     .collect(Collectors.toList());
         }
 
-        lblRecordingInfo.setCurrentPageIndex(0);
         updatePagination();
+    }
+
+    private void showSearchSuggestions(String input) {
+
+        searchSuggestions.getItems().clear();
+
+        if (input == null
+                || input.trim().isEmpty()
+                || txtSearch.getScene() == null
+                || txtSearch.getScene().getWindow() == null
+                || !txtSearch.getScene().getWindow().isShowing()) {
+
+            searchSuggestions.hide();
+            return;
+        }
+
+        String keyword = input.trim().toLowerCase();
+
+        List<BorrowRecord> matches = allRecords.stream()
+                .filter(record ->
+                        safe(record.getBorrowedID()).contains(keyword)
+                                || safe(record.getBookTitle()).contains(keyword)
+                                || safe(record.getMemberName()).contains(keyword))
+                .limit(8)
+                .collect(Collectors.toList());
+
+        for (BorrowRecord record : matches) {
+
+            MenuItem item = new MenuItem(
+                    record.getBorrowedID()
+                            + " - " + record.getBookTitle()
+                            + " - " + record.getMemberName()
+            );
+
+            item.setOnAction(event -> {
+                txtSearch.setText(record.getBorrowedID());
+                txtSearch.positionCaret(
+                        txtSearch.getText().length()
+                );
+                searchSuggestions.hide();
+                applySearch(txtSearch.getText());
+            });
+
+            searchSuggestions.getItems().add(item);
+        }
+
+        if (searchSuggestions.getItems().isEmpty()) {
+            searchSuggestions.hide();
+        } else {
+            searchSuggestions.show(
+                    txtSearch,
+                    Side.BOTTOM,
+                    0,
+                    0
+            );
+        }
+    }
+
+    private String safe(String value) {
+        return value == null
+                ? ""
+                : value.toLowerCase();
+    }
+
+    @FXML
+    void btnSearchOnAction(ActionEvent event) {
+
+        searchSuggestions.hide();
+
+        lblRecordingInfo.setCurrentPageIndex(0);
+
+        applySearch(txtSearch.getText());
     }
 
     @FXML

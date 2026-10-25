@@ -17,6 +17,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javafx.geometry.Side;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 
 public class ManageMembersController implements NavigatableController {
 
@@ -50,6 +53,8 @@ public class ManageMembersController implements NavigatableController {
 
     private PageNavigator navigator;
 
+    private final ContextMenu searchSuggestions = new ContextMenu();
+
     @Override
     public void setNavigator(PageNavigator navigator) {
         this.navigator = navigator;
@@ -64,8 +69,18 @@ public class ManageMembersController implements NavigatableController {
             return new AnchorPane();
         });
 
+
+        txtSearch.textProperty().addListener(
+                (observable, oldValue, newValue) -> {
+                    pegination.setCurrentPageIndex(0);
+                    applySearch();
+                    showSearchSuggestions(newValue);
+                }
+        );
+
         loadMembersFromDatabase();
     }
+
 
     private void createTableColumns() {
         TableColumn<Member, String> colMemberId =
@@ -199,6 +214,58 @@ public class ManageMembersController implements NavigatableController {
                         filteredMembers.subList(fromIndex, toIndex)
                 )
         );
+    }
+
+    private void showSearchSuggestions(String input) {
+        searchSuggestions.getItems().clear();
+
+        if (input == null || input.trim().isEmpty()
+                || txtSearch.getScene() == null
+                || txtSearch.getScene().getWindow() == null
+                || !txtSearch.getScene().getWindow().isShowing()) {
+            searchSuggestions.hide();
+            return;
+        }
+
+        String keyword = input.trim().toLowerCase();
+
+        List<Member> matches = allMembers.stream()
+                .filter(member ->
+                        safe(member.getMemberId()).contains(keyword)
+                                || safe(member.getFullName()).contains(keyword)
+                                || safe(member.getEmail()).contains(keyword)
+                                || safe(member.getPhoneNumber()).contains(keyword)
+                                || safe(member.getAddress()).contains(keyword)
+                )
+                .limit(8)
+                .collect(Collectors.toList());
+
+        for (Member member : matches) {
+            MenuItem item = new MenuItem(
+                    member.getMemberId() + " - " + member.getFullName()
+            );
+
+            item.setOnAction(event -> {
+                txtSearch.setText(member.getMemberId());
+                txtSearch.positionCaret(txtSearch.getText().length());
+
+                applySearch();
+                searchSuggestions.hide();
+
+
+                tblMembers.getSelectionModel().clearSelection();
+                tblMembers.getSelectionModel().select(member);
+                tblMembers.scrollTo(member);
+            });
+
+            searchSuggestions.getItems().add(item);
+        }
+
+        if (searchSuggestions.getItems().isEmpty()) {
+            searchSuggestions.hide();
+        } else {
+            searchSuggestions.show(txtSearch, Side.BOTTOM, 0, 0);
+        }
     }
 
     @FXML

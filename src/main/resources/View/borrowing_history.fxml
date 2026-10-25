@@ -68,12 +68,12 @@
                         <Font name="System Bold" size="18.0" />
                      </font>
                   </Button>
+                   <Button fx:id="btnAddMember" mnemonicParsing="false" onAction="#btnAddMemberOnAction" prefHeight="50.0" prefWidth="260.0" style="-fx-background-color: #a8f7fa;" text="👤 Add Member">
+                       <font>
+                           <Font name="System Bold" size="18.0" />
+                       </font>
+                   </Button>
                   <Button fx:id="btnManageMembers" mnemonicParsing="false" onAction="#btnManageMembersOnAction" prefHeight="50.0" prefWidth="260.0" style="-fx-background-color: #a8f7fa;" text="👥 Manage Members">
-                     <font>
-                        <Font name="System Bold" size="18.0" />
-                     </font>
-                  </Button>
-                  <Button fx:id="btnAddMember" mnemonicParsing="false" onAction="#btnAddMemberOnAction" prefHeight="50.0" prefWidth="260.0" style="-fx-background-color: #a8f7fa;" text="👤 Add Member">
                      <font>
                         <Font name="System Bold" size="18.0" />
                      </font>

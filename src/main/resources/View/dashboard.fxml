@@ -97,11 +97,15 @@
                                     <Font name="Segoe UI Bold" size="28.0" />
                                  </font>
                               </Label>
-                              <Label alignment="CENTER" prefHeight="94.0" prefWidth="235.0" text="0">
-                                 <font>
-                                    <Font name="System Bold" size="35.0" />
-                                 </font>
-                              </Label>
+                               <Label fx:id="lblTotalBooks"
+                                      alignment="CENTER"
+                                      prefHeight="94.0"
+                                      prefWidth="235.0"
+                                      text="0">
+                                   <font>
+                                       <Font name="System Bold" size="35.0" />
+                                   </font>
+                               </Label>
                            </children>
                         </VBox>
                         <VBox prefHeight="200.0" prefWidth="250.0" style="-fx-background-color: #a5f9b6;">
@@ -114,11 +118,15 @@
                                     <Font name="Segoe UI Bold" size="25.0" />
                                  </font>
                               </Label>
-                              <Label alignment="CENTER" prefHeight="99.0" prefWidth="223.0" text="0">
-                                 <font>
-                                    <Font name="System Bold" size="35.0" />
-                                 </font>
-                              </Label>
+                               <Label fx:id="lblTotalMembers"
+                                      alignment="CENTER"
+                                      prefHeight="99.0"
+                                      prefWidth="223.0"
+                                      text="0">
+                                   <font>
+                                       <Font name="System Bold" size="35.0" />
+                                   </font>
+                               </Label>
                            </children>
                         </VBox>
                         <VBox prefHeight="200.0" prefWidth="250.0" style="-fx-background-color: #e9b9f5;">
@@ -131,11 +139,15 @@
                                     <Font name="Segoe UI Bold" size="23.0" />
                                  </font>
                               </Label>
-                              <Label alignment="CENTER" prefHeight="90.0" prefWidth="230.0" text="0">
-                                 <font>
-                                    <Font name="System Bold" size="35.0" />
-                                 </font>
-                              </Label>
+                               <Label fx:id="lblBorrowedBooks"
+                                      alignment="CENTER"
+                                      prefHeight="90.0"
+                                      prefWidth="230.0"
+                                      text="0">
+                                   <font>
+                                       <Font name="System Bold" size="35.0" />
+                                   </font>
+                               </Label>
                            </children>
                         </VBox>
                         <VBox prefHeight="200.0" prefWidth="250.0" style="-fx-background-color: #f9a5bd;">
@@ -148,11 +160,15 @@
                                     <Font name="Segoe UI Bold" size="25.0" />
                                  </font>
                               </Label>
-                              <Label alignment="CENTER" prefHeight="100.0" prefWidth="222.0" text="0">
-                                 <font>
-                                    <Font name="System Bold" size="34.0" />
-                                 </font>
-                              </Label>
+                               <Label fx:id="lblOverdueBooks"
+                                      alignment="CENTER"
+                                      prefHeight="100.0"
+                                      prefWidth="222.0"
+                                      text="0">
+                                   <font>
+                                       <Font name="System Bold" size="34.0" />
+                                   </font>
+                               </Label>
                            </children>
                         </VBox>
                      </children>

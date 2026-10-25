@@ -24,6 +24,12 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import javafx.geometry.Side;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ReturnBookController implements NavigatableController {
 
@@ -58,6 +64,11 @@ public class ReturnBookController implements NavigatableController {
     private Borrowing currentRecord;
     private PageNavigator navigator;
 
+    private final ContextMenu searchSuggestions = new ContextMenu();
+
+    private final List<Borrowing> borrowingRecords =
+            new ArrayList<>();
+
     @Override
     public void setNavigator(PageNavigator navigator) {
         this.navigator = navigator;
@@ -65,12 +76,19 @@ public class ReturnBookController implements NavigatableController {
 
     @FXML
     public void initialize() {
+
         dpReturnDate.setValue(LocalDate.now());
 
         dpReturnDate.valueProperty().addListener(
                 (observable, oldDate, newDate) -> updateLateDays()
         );
 
+        txtEnterBorrowID.textProperty().addListener(
+                (observable, oldValue, newValue) ->
+                        showBorrowingSuggestions(newValue)
+        );
+
+        loadBorrowingRecords();
         clearDetails();
     }
 
@@ -89,7 +107,7 @@ public class ReturnBookController implements NavigatableController {
             return;
         }
 
-        try {
+
             currentRecord = findBorrowing(borrowingCode);
 
             if (currentRecord == null) {
@@ -114,26 +132,15 @@ public class ReturnBookController implements NavigatableController {
                 );
             }
 
-        } catch (SQLException e) {
-            currentRecord = null;
-            clearDetails();
-
-            showAlert(
-                    Alert.AlertType.ERROR,
-                    "Database Error",
-                    "Unable to search borrowing records.\n"
-                            + e.getMessage()
-            );
-        }
     }
+    private Borrowing findBorrowing(String borrowingCode) {
 
-    private Borrowing findBorrowing(String borrowingCode)
-            throws SQLException {
+        for (Borrowing borrowing : borrowingRecords) {
 
-        for (Borrowing borrowing : borrowingDAO.getAllBorrowings()) {
             if (borrowing.getBorrowingCode() != null
                     && borrowing.getBorrowingCode()
                     .equalsIgnoreCase(borrowingCode)) {
+
                 return borrowing;
             }
         }
@@ -182,6 +189,89 @@ public class ReturnBookController implements NavigatableController {
                         ? "Not overdue"
                         : lateDays + " day(s) overdue"
         );
+    }
+    private void loadBorrowingRecords() {
+
+        try {
+            borrowingRecords.clear();
+            borrowingRecords.addAll(
+                    borrowingDAO.getAllBorrowings()
+            );
+
+        } catch (SQLException e) {
+            showAlert(
+                    Alert.AlertType.ERROR,
+                    "Database Error",
+                    "Unable to load borrowing suggestions.\n"
+                            + e.getMessage()
+            );
+        }
+    }
+
+    private void showBorrowingSuggestions(String input) {
+
+        searchSuggestions.getItems().clear();
+
+        if (input == null
+                || input.trim().isEmpty()
+                || txtEnterBorrowID.getScene() == null
+                || txtEnterBorrowID.getScene().getWindow() == null
+                || !txtEnterBorrowID.getScene()
+                .getWindow().isShowing()) {
+
+            searchSuggestions.hide();
+            return;
+        }
+
+        String keyword = input.trim().toLowerCase();
+
+        List<Borrowing> matches = borrowingRecords.stream()
+                .filter(record ->
+                        safe(record.getBorrowingCode()).contains(keyword)
+                                || safe(record.getBookTitle()).contains(keyword)
+                                || safe(record.getMemberName()).contains(keyword))
+                .limit(8)
+                .collect(Collectors.toList());
+
+        for (Borrowing record : matches) {
+
+            String code = record.getBorrowingCode();
+
+            MenuItem item = new MenuItem(
+                    code + " - "
+                            + textOrDash(record.getBookTitle())
+                            + " - "
+                            + textOrDash(record.getMemberName())
+                            + " (" + textOrDash(record.getStatus()) + ")"
+            );
+
+            item.setOnAction(event -> {
+                txtEnterBorrowID.setText(code);
+                txtEnterBorrowID.positionCaret(
+                        txtEnterBorrowID.getText().length()
+                );
+                searchSuggestions.hide();
+            });
+
+            searchSuggestions.getItems().add(item);
+        }
+
+        if (searchSuggestions.getItems().isEmpty()) {
+            searchSuggestions.hide();
+        } else {
+            searchSuggestions.show(
+                    txtEnterBorrowID,
+                    Side.BOTTOM,
+                    0,
+                    0
+            );
+        }
+    }
+
+    private String safe(String value) {
+        return value == null
+                ? ""
+                : value.toLowerCase();
     }
 
     @FXML
