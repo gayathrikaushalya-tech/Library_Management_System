@@ -1,104 +1,70 @@
 package Controller;
 
+import DAO.BookDAO;
+import DAO.MemberDAO;
+import DAO.BorrowingDAO;
+import Model.Book;
+import Model.Member;
+import Util.NavigatableController;
+import Util.PageNavigator;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DateCell;
 import javafx.scene.control.DatePicker;
 import javafx.scene.layout.AnchorPane;
 
-import java.io.IOException;
-import java.net.URL;
+import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
-public class IssueBookController {
+public class IssueBookController implements NavigatableController {
 
-    @FXML
-    private Button btnAddBook;
+    @FXML private Button btnAddBook;
+    @FXML private Button btnAddMember;
+    @FXML private Button btnBorrowingHistory;
+    @FXML private Button btnClear;
+    @FXML private Button btnDashboard;
+    @FXML private Button btnIssue;
+    @FXML private Button btnIssueBook;
+    @FXML private Button btnLogout;
+    @FXML private Button btnLogoutIcon;
+    @FXML private Button btnManageMembers;
+    @FXML private Button btnReturnBook;
+    @FXML private Button btnUserIcon;
 
-    @FXML
-    private Button btnAddMember;
+    @FXML private ComboBox<String> cmbBook;
+    @FXML private ComboBox<String> cmbMember;
+    @FXML private DatePicker dpDueDate;
+    @FXML private DatePicker dpIssueDate;
+    @FXML private AnchorPane rootPane;
 
-    @FXML
-    private Button btnBorrowingHistory;
+    private final BookDAO bookDAO = new BookDAO();
+    private final MemberDAO memberDAO = new MemberDAO();
+    private final BorrowingDAO borrowingDAO = new BorrowingDAO();
 
-    @FXML
-    private Button btnClear;
+    private PageNavigator navigator;
+    private List<Book> books;
+    private List<Member> members;
 
-    @FXML
-    private Button btnDashboard;
-
-    @FXML
-    private Button btnIssue;
-
-    @FXML
-    private Button btnIssueBook;
-
-    @FXML
-    private Button btnLogout;
-
-    @FXML
-    private Button btnLogoutIcon;
-
-    @FXML
-    private Button btnManageMembers;
-
-    @FXML
-    private Button btnReturnBook;
-
-    @FXML
-    private Button btnUserIcon;
-
-    @FXML
-    private ComboBox<String> cmbBook;
-
-    @FXML
-    private ComboBox<String> cmbMember;
-
-    @FXML
-    private DatePicker dpDueDate;
-
-    @FXML
-    private DatePicker dpIssueDate;
-
-    @FXML
-    private AnchorPane rootPane;
-
+    @Override
+    public void setNavigator(PageNavigator navigator) {
+        this.navigator = navigator;
+    }
 
     @FXML
     public void initialize() {
 
-
-        cmbBook.getItems().setAll(
-                "B001 - Harry Potter",
-                "B002 - The Jungle Book",
-                "B003 - Introduction to Java",
-                "B004 - Science for Beginners",
-                "B005 - World History"
-        );
-
-
-        cmbMember.getItems().setAll(
-                "M001 - Nimesha Perera",
-                "M002 - Kasun Silva",
-                "M003 - Dulani Fernando",
-                "M004 - Sanduni Wijesekara",
-                "M005 - Tharindu Jayasinghe"
-        );
-
         dpIssueDate.setValue(LocalDate.now());
-
-
         dpDueDate.setValue(LocalDate.now().plusDays(14));
 
-
-        dpDueDate.setDayCellFactory(datePicker ->
-                new javafx.scene.control.DateCell() {
+        dpDueDate.setDayCellFactory(picker ->
+                new DateCell() {
                     @Override
                     public void updateItem(
                             LocalDate date, boolean empty) {
@@ -107,110 +73,134 @@ public class IssueBookController {
 
                         LocalDate issueDate = dpIssueDate.getValue();
 
-                        if (empty || issueDate == null) {
-                            setDisable(empty);
-                        } else {
-                            setDisable(date.isBefore(issueDate));
-                        }
+                        setDisable(empty || issueDate == null
+                                || date.isBefore(issueDate));
                     }
-                }
-        );
+                });
+
+        loadBooksAndMembers();
     }
 
+    private void loadBooksAndMembers() {
+        try {
+            books = bookDAO.getAllBooks();
+            members = memberDAO.getAllMembers();
+
+            cmbBook.getItems().clear();
+
+            for (Book book : books) {
+                if (book.getAvailableQuantity() > 0) {
+                    cmbBook.getItems().add(
+                            book.getBookCode() + " - "
+                                    + book.getTitle()
+                                    + " (Available: "
+                                    + book.getAvailableQuantity() + ")");
+                }
+            }
+
+            cmbMember.getItems().clear();
+
+            for (Member member : members) {
+                cmbMember.getItems().add(
+                        member.getMemberId() + " - "
+                                + member.getFullName());
+            }
+
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR,
+                    "Database Error",
+                    "Unable to load books and members.\n"
+                            + e.getMessage());
+        }
+    }
 
     @FXML
     void btnIssueOnAction(ActionEvent event) {
 
-        String book = cmbBook.getValue();
-        String member = cmbMember.getValue();
-
+        String selectedBook = cmbBook.getValue();
+        String selectedMember = cmbMember.getValue();
         LocalDate issueDate = dpIssueDate.getValue();
         LocalDate dueDate = dpDueDate.getValue();
 
-
-        if (book == null) {
-            showAlert(
-                    Alert.AlertType.WARNING,
-                    "Missing Book",
-                    "Please select a book."
-            );
+        if (selectedBook == null || selectedMember == null
+                || issueDate == null || dueDate == null) {
+            showAlert(Alert.AlertType.WARNING,
+                    "Missing Information",
+                    "Select a book, a member, an issue date, "
+                            + "and a due date.");
             return;
         }
-
-
-        if (member == null) {
-            showAlert(
-                    Alert.AlertType.WARNING,
-                    "Missing Member",
-                    "Please select a member."
-            );
-            return;
-        }
-
-
-        if (issueDate == null) {
-            showAlert(
-                    Alert.AlertType.WARNING,
-                    "Missing Issue Date",
-                    "Please select the issue date."
-            );
-            return;
-        }
-
-
-        if (dueDate == null) {
-            showAlert(
-                    Alert.AlertType.WARNING,
-                    "Missing Due Date",
-                    "Please select the due date."
-            );
-            return;
-        }
-
 
         if (dueDate.isBefore(issueDate)) {
-            showAlert(
-                    Alert.AlertType.ERROR,
+            showAlert(Alert.AlertType.WARNING,
                     "Invalid Due Date",
-                    "The due date cannot be before the issue date."
-            );
+                    "The due date cannot be before the issue date.");
             return;
         }
 
-        Alert confirmation = new Alert(
-                Alert.AlertType.CONFIRMATION
-        );
+        String bookCode = selectedBook.split(" - ", 2)[0];
+        String memberCode = selectedMember.split(" - ", 2)[0];
+
+        Book selectedBookObject = books.stream()
+                .filter(book -> bookCode.equals(book.getBookCode()))
+                .findFirst().orElse(null);
+
+        Member selectedMemberObject = members.stream()
+                .filter(member ->
+                        memberCode.equals(member.getMemberId()))
+                .findFirst().orElse(null);
+
+        if (selectedBookObject == null
+                || selectedMemberObject == null) {
+            showAlert(Alert.AlertType.ERROR,
+                    "Selection Error",
+                    "The selected book or member could not be found.");
+            return;
+        }
+
+        Alert confirmation =
+                new Alert(Alert.AlertType.CONFIRMATION);
 
         confirmation.setTitle("Issue Book");
         confirmation.setHeaderText("Confirm Book Issue");
         confirmation.setContentText(
-                "Book: " + book
-                        + "\nMember: " + member
+                "Book: " + selectedBookObject.getTitle()
+                        + "\nMember: "
+                        + selectedMemberObject.getFullName()
                         + "\nIssue Date: " + issueDate
-                        + "\nDue Date: " + dueDate
-                        + "\n\nDo you want to issue this book?"
-        );
+                        + "\nDue Date: " + dueDate);
 
-        Optional<ButtonType> result =
-                confirmation.showAndWait();
+        Optional<ButtonType> result = confirmation.showAndWait();
 
         if (result.isPresent()
                 && result.get() == ButtonType.OK) {
 
-            showAlert(
-                    Alert.AlertType.INFORMATION,
-                    "Success",
-                    "Book issued successfully!\n\n"
-                            + "Book: " + book
-                            + "\nMember: " + member
-                            + "\nIssue Date: " + issueDate
-                            + "\nDue Date: " + dueDate
-            );
+            try {
+                boolean success = borrowingDAO.issueBook(
+                        selectedBookObject.getId(),
+                        selectedMemberObject.getId(),
+                        java.sql.Date.valueOf(issueDate),
+                        java.sql.Date.valueOf(dueDate));
 
-            clearFields();
+                if (success) {
+                    showAlert(Alert.AlertType.INFORMATION,
+                            "Success",
+                            "Book issued successfully.");
+
+                    clearFields();
+                    loadBooksAndMembers();
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+
+                showAlert(Alert.AlertType.ERROR,
+                        "Issue Failed",
+                        "Unable to issue this book.\n"
+                                + e.getMessage());
+            }
         }
     }
-
 
     @FXML
     void btnClearOnAction(ActionEvent event) {
@@ -218,65 +208,122 @@ public class IssueBookController {
     }
 
     private void clearFields() {
-
         cmbBook.getSelectionModel().clearSelection();
         cmbMember.getSelectionModel().clearSelection();
-
         dpIssueDate.setValue(LocalDate.now());
         dpDueDate.setValue(LocalDate.now().plusDays(14));
     }
-
 
     @FXML
     void cmbBookOnAction(ActionEvent event) {
 
     }
 
-
     @FXML
     void cmbMemberOnAction(ActionEvent event) {
 
     }
 
-
     @FXML
     void dpIssueDateOnAction(ActionEvent event) {
-
         LocalDate issueDate = dpIssueDate.getValue();
 
-        if (issueDate == null) {
-            return;
-        }
-
-
-        if (dpDueDate.getValue() == null
-                || dpDueDate.getValue().isBefore(issueDate)) {
-
+        if (issueDate != null
+                && (dpDueDate.getValue() == null
+                || dpDueDate.getValue().isBefore(issueDate))) {
             dpDueDate.setValue(issueDate.plusDays(14));
         }
     }
 
-
     @FXML
     void dpDueDateOnAction(ActionEvent event) {
-
         LocalDate issueDate = dpIssueDate.getValue();
         LocalDate dueDate = dpDueDate.getValue();
 
         if (issueDate != null && dueDate != null
                 && dueDate.isBefore(issueDate)) {
-
-            showAlert(
-                    Alert.AlertType.WARNING,
+            showAlert(Alert.AlertType.WARNING,
                     "Invalid Due Date",
-                    "Please select a due date on or after "
-                            + "the issue date."
-            );
-
+                    "Choose a due date on or after the issue date.");
             dpDueDate.setValue(issueDate.plusDays(14));
         }
     }
 
+    @FXML
+    void btnDashboardOnAction(ActionEvent event) {
+        navigateTo("dashboard_home");
+    }
+
+    @FXML
+    void btnAddBookOnAction(ActionEvent event) {
+        navigateTo("add_book_page");
+    }
+
+    @FXML
+    void btnAddMemberOnAction(ActionEvent event) {
+        navigateTo("add_member");
+    }
+
+    @FXML
+    void btnBorrowingHistoryOnACtion(ActionEvent event) {
+        navigateTo("borrowing_history");
+    }
+
+    @FXML
+    void btnManageMembersOnAction(ActionEvent event) {
+        navigateTo("manage_members");
+    }
+
+    @FXML
+    void btnReturnBookOnAction(ActionEvent event) {
+        navigateTo("return_book");
+    }
+
+    @FXML
+    void btnIssueBookOnAction(ActionEvent event) {
+        navigateTo("issue_book");
+    }
+
+    @FXML
+    void btnLogoutOnAction(ActionEvent event) {
+        logout();
+    }
+
+    @FXML
+    void btnLogoutIconOnAction(ActionEvent event) {
+        logout();
+    }
+
+    @FXML
+    void btnUserIconOnAction(ActionEvent event) {
+        showAlert(Alert.AlertType.INFORMATION,
+                "User Information", "Logged-in user: Admin");
+    }
+
+    private void logout() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Logout");
+        alert.setHeaderText("Confirm Logout");
+        alert.setContentText("Are you sure you want to log out?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+
+        if (result.isPresent()
+                && result.get() == ButtonType.OK) {
+            navigateTo("login_page");
+        }
+    }
+
+    private void navigateTo(String pageName) {
+        if (navigator == null) {
+            showAlert(Alert.AlertType.ERROR,
+                    "Navigation Error",
+                    "The shared navigator was not initialized.");
+            return;
+        }
+
+        navigator.navigate(pageName);
+    }
 
     private void showAlert(
             Alert.AlertType type,
@@ -288,126 +335,5 @@ public class IssueBookController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
-    }
-
-
-    private void loadPage(String fxmlFile) {
-
-        try {
-            URL resource = getClass().getResource(
-                    "/View/" + fxmlFile
-            );
-
-            if (resource == null) {
-                showAlert(
-                        Alert.AlertType.ERROR,
-                        "Navigation Error",
-                        "FXML file not found: " + fxmlFile
-                );
-                return;
-            }
-
-            Parent page = FXMLLoader.load(resource);
-
-            rootPane.getChildren().setAll(page);
-
-            AnchorPane.setTopAnchor(page, 0.0);
-            AnchorPane.setRightAnchor(page, 0.0);
-            AnchorPane.setBottomAnchor(page, 0.0);
-            AnchorPane.setLeftAnchor(page, 0.0);
-
-        } catch (IOException e) {
-            showAlert(
-                    Alert.AlertType.ERROR,
-                    "Navigation Error",
-                    "Unable to load " + fxmlFile
-            );
-
-            e.printStackTrace();
-        }
-    }
-
-
-    @FXML
-    void btnDashboardOnAction(ActionEvent event) {
-        loadPage("dashboard.fxml");
-    }
-
-
-    @FXML
-    void btnAddBookOnAction(ActionEvent event) {
-        loadPage("add_book_page.fxml");
-    }
-
-
-    @FXML
-    void btnAddMemberOnAction(ActionEvent event) {
-        loadPage("add_member.fxml");
-    }
-
-
-    @FXML
-    void btnBorrowingHistoryOnACtion(ActionEvent event) {
-        loadPage("borrowing_history.fxml");
-    }
-
-
-    @FXML
-    void btnManageMembersOnAction(ActionEvent event) {
-        loadPage("manage_members.fxml");
-    }
-
-
-    @FXML
-    void btnReturnBookOnAction(ActionEvent event) {
-        loadPage("return_book.fxml");
-    }
-
-
-    @FXML
-    void btnLogoutOnAction(ActionEvent event) {
-        logout();
-    }
-
-
-    @FXML
-    void btnLogoutIconOnAction(ActionEvent event) {
-        logout();
-    }
-
-    private void logout() {
-
-        Alert alert = new Alert(
-                Alert.AlertType.CONFIRMATION
-        );
-
-        alert.setTitle("Logout");
-        alert.setHeaderText("Confirm Logout");
-        alert.setContentText(
-                "Are you sure you want to log out?"
-        );
-
-        Optional<ButtonType> result = alert.showAndWait();
-
-        if (result.isPresent()
-                && result.get() == ButtonType.OK) {
-
-            loadPage("login_page.fxml");
-        }
-    }
-
-
-    @FXML
-    void btnUserIconOnAction(ActionEvent event) {
-
-        showAlert(
-                Alert.AlertType.INFORMATION,
-                "User Information",
-                "Logged-in user: Admin"
-        );
-    }
-
-    public void btnIssueBookOnAction(ActionEvent actionEvent) {
-        loadPage("issue_book.fxml");
     }
 }
