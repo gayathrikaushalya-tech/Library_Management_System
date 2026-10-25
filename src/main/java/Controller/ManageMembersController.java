@@ -455,7 +455,7 @@ public class ManageMembersController implements NavigatableController {
 
     @FXML
     void btnManageMembersOnAction(ActionEvent event) {
-        loadMembersFromDatabase();
+        navigate("manage_members");
     }
 
     @FXML
