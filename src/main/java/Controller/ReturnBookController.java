@@ -36,6 +36,7 @@ public class ReturnBookController implements NavigatableController {
     @FXML private Button btnLogoutIcon;
     @FXML private Button btnManageMembers;
     @FXML private Button btnReturnBook;
+    @FXML private Button btnReturn;
     @FXML private Button btnSearch;
     @FXML private Button btnUserIcon;
 
@@ -184,7 +185,7 @@ public class ReturnBookController implements NavigatableController {
     }
 
     @FXML
-    void btnReturnBookOnAction(ActionEvent event) {
+    void btnReturnOnAction(ActionEvent event) {
         if (currentRecord == null) {
             showAlert(
                     Alert.AlertType.WARNING,
@@ -375,6 +376,11 @@ public class ReturnBookController implements NavigatableController {
     @FXML
     void btnManageMembersOnAction(ActionEvent event) {
         navigate("manage_members");
+    }
+
+    @FXML
+    void btnReturnBookOnAction(ActionEvent event) {
+        navigate("return_book");
     }
 
     @FXML
